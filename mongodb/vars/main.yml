@@ -1,0 +1,11 @@
+---
+mongo_port: 27018
+mongo_replicaset: test
+mongo_keyfile_path: /var/lib/mongo/keyfile.txt
+mongo_user: admin
+mongo_password: Nabi@1382
+mongo_user_roles:
+  - db: admin
+    role: userAdminAnyDatabase
+  - db: admin
+    role: root

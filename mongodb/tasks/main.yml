@@ -1,0 +1,66 @@
+---
+- name: Create mongo repo file
+  template:
+    src: mongodb-org-7.0.repo.j2
+    dest: /etc/yum.repos.d/mongodb-org-7.0.repo
+
+- name: Install the MongoDB packages
+  yum:
+    name: mongodb-org
+    state: present
+
+- name: open mongo port with firewalld
+  shell: firewall-cmd --permanent --add-port="{{ mongo_port }}"/tcp; firewall-cmd --reload
+  notify: start mongo
+
+- name: run handlers immediately
+  meta: flush_handlers
+
+- name: install pip package
+  yum:
+    name: pip
+    state: present
+
+- name: install pymongo for using mongo community in ansible
+  pip:
+    name: pymongo
+    state: present
+
+- name: create admin user
+  community.mongodb.mongodb_user:
+    database: admin
+    name: "{{ mongo_user }}"
+    password: "{{ mongo_password }}"
+    roles: "{{ mongo_user_roles  }}"
+  when: groups.mongodb.index(inventory_hostname) == 0
+
+- name: copy mongo keyfile
+  copy:
+    src: keyfile.txt
+    dest: "{{ mongo_keyfile_path }}"
+
+- name: change keyfile owner
+  shell: chmod 400 "{{ mongo_keyfile_path }}" & chown mongod:mongod "{{ mongo_keyfile_path }}"
+
+- name: copy custom config
+  template:
+    src: mongod.conf.j2
+    dest: /etc/mongod.conf
+  notify: restart mongo
+
+- name: run handlers immediately
+  meta: flush_handlers
+
+- name: create replication
+  community.mongodb.mongodb_replicaset:
+    login_host: "{{ ansible_host }}"
+    login_port: "{{ mongo_port }}"
+    replica_set: "{{ mongo_replicaset }}"
+    members: "{{ groups.mongodb | map('regex_replace', '^(.*)$', '\\1:' + mongo_port | string) | list }}"
+  when: groups.mongodb.index(inventory_hostname) == 0
+
+- name: copy enable mongo auth config
+  template:
+    src: mongod.conf.auth.j2
+    dest: /etc/mongod.conf
+  notify: restart mongo

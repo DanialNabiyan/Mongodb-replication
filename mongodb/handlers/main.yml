@@ -1,0 +1,11 @@
+---
+- name: start mongo
+  systemd_service:
+    name: mongod
+    state: started
+    enabled: true
+
+- name: restart mongo
+  systemd_service:
+    name: mongod
+    state: restarted

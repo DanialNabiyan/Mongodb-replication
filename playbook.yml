@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+  - name: create keyfile for mongo auth replicaset
+    shell: openssl rand -base64 768 > ./mongodb/files/keyfile.txt
+    
+- hosts: mongodb
+  roles:
+  - mongodb

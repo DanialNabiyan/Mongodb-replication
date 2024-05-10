@@ -1,0 +1,5 @@
+mongodb:
+  hosts:
+    ip or server1 name:
+    ip or server2 name:
+    ip or server3 name:
